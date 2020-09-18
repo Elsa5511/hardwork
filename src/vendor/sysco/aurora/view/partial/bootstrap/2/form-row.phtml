@@ -1,0 +1,29 @@
+<?php $hasErrors = count($element->getMessages()) > 0; ?>
+<div class="control-group<?php echo ($hasErrors ? ' error' : ''); ?>">
+
+    <?php
+    if ($useLabel && $element->getLabel()):
+        $required = $element->getAttribute('required') ? ' required' : '';
+        ?>
+        <label class="control-label<?php echo $required; ?>"<?php if ($element->hasAttribute('id')): ?> for="<?php echo $element->getAttribute('id'); ?>"<?php endif; ?>>
+            <?php echo $this->translate($element->getLabel()); ?>
+        </label>
+    <?php endif; ?>
+
+    <div class="controls">
+        <?php if ($addOn = $element->getOption('add_on')): ?>
+            <div class="input-prepend">
+                <span class="add-on"><?php echo $addOn; ?></span>
+        <?php endif; ?>
+            <?php echo call_user_func(array($this, 'form' . ucfirst($element->getAttribute('type'))), $element); ?>
+        <?php if ($addOn): ?>
+            </div>
+        <?php endif; ?>
+        <?php if ($hasErrors): ?>
+            <span class="help-inline"><?php echo implode('<br />', $element->getMessages()); ?></span>
+        <?php endif; ?>
+        <?php if ($description = $element->getOption('description')): ?>        
+            <span class="help-block"><?php echo $description; ?></span>
+        <?php endif; ?>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+<?php if ($this->pageCount): ?>
+    <ul class="pagination pull-<?php echo isset($this->align) ? $this->align : 'centered'; ?>">
+        <!-- Previous page link -->
+        <?php
+        if (isset($this->previous)):
+            $params = array_merge_recursive($this->params, array('page' => $this->previous));
+            ?>
+            <li class="previous">
+                <a href="<?php echo $this->url($this->route, $params); ?>">
+                    <?php printf('« %s', $this->translate('Previous')) ?>
+                </a>
+            </li>
+        <?php else: ?>
+
+            <li class="previous disabled">
+                <a href="#">
+                    <?php printf('« %s', $this->translate('Previous')) ?>
+                </a>
+            </li>
+
+
+        <?php endif; ?>
+        <!-- Numbered page links -->
+        <?php foreach ($this->pagesInRange as $page): ?>
+            <?php
+            if ($page != $this->current):
+                $params = array_merge_recursive($this->params, array('page' => $page));
+                ?>
+                <li>
+                    <a href="<?php echo $this->url($this->route, $params); ?>">
+                        <?php echo $page; ?>
+                    </a>
+                </li>
+            <?php else: ?>
+                <li class="active">
+                    <a href="#"><?php echo $page; ?></a>
+                </li>
+            <?php endif; ?>
+        <?php endforeach; ?>
+
+        <!-- Next page link -->
+        <?php
+        if (isset($this->next)):
+            $params = array_merge_recursive($this->params, array('page' => $this->next));
+            ?>
+            <li>
+                <a href="<?php echo $this->url($this->route, $params); ?>">
+                    <?php printf('%s »', $this->translate('Next')) ?>
+                </a>
+            </li>
+        <?php else: ?>
+            <li class="disabled">
+                <a href="#">
+                    <?php printf('%s »', $this->translate('Next')) ?>
+                </a>
+            </li>
+        <?php endif; ?>
+    </ul>
+<?php endif; ?>

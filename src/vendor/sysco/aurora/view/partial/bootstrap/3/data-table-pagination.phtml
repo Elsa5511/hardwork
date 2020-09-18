@@ -1,0 +1,21 @@
+<div class="row">
+    <div class="col-md-6">
+        <div class="pagination">
+            <?php printf($this->translate('Showing %d to %d of %d entries'), $this->firstItemNumber, $this->lastItemNumber, $this->totalItemCount); ?>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <?php
+        echo $this->partial('partial/bootstrap/3/paginator', array(
+            'align' => 'right',
+            'pageCount' => $this->pageCount,
+            'previous' => $this->previous,
+            'params' => $this->params,
+            'next' => $this->next,
+            'pagesInRange' => $this->pagesInRange,
+            'current' => $this->current,
+            'route' => $this->route
+        ));
+        ?>        
+    </div>
+</div>   

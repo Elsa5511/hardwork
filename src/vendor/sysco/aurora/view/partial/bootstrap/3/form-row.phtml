@@ -1,0 +1,33 @@
+<?php $hasErrors = count($element->getMessages()) > 0; ?>
+<div class="form-group<?php echo ($hasErrors ? ' error' : ''); ?>">
+
+    <?php
+    $labelSize = 2;
+    if ($useLabel && $element->getLabel()):
+        $required = $element->getAttribute('required') ? ' required' : '';
+        ?>
+        <label class="col-sm-<?php echo $labelSize; ?> control-label<?php echo $required; ?>" for="<?php echo $element->getAttribute('id'); ?>">
+            <?php echo $this->translate($element->getLabel()); ?>
+        </label>
+    <?php endif; ?>
+
+    <div class="col-sm-<?php echo (12 - $labelSize); ?>">
+        <?php if ($addOn = $element->getOption('add_on')): ?>
+            <div class="input-group">
+                <span class="input-group-add-on"><?php echo $addOn; ?></span>
+        <?php endif; ?>
+            <?php
+            $element->setAttribute('class', 'form-control ' . $element->getAttribute('class'));
+            echo call_user_func(array($this, 'form' . ucfirst($element->getAttribute('type'))), $element);
+            ?>
+        <?php if ($addOn): ?>
+            </div>
+        <?php endif; ?>
+        <?php if ($hasErrors): ?>
+            <span class="help-inline"><?php echo implode('<br />', $element->getMessages()); ?></span>
+        <?php endif; ?>
+        <?php if ($description = $element->getOption('description')): ?>        
+            <span class="help-block"><?php echo $description; ?></span>
+        <?php endif; ?>
+    </div>
+</div>

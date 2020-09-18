@@ -1,0 +1,218 @@
+<?php
+    $itemsIsInstanceOfPaginator = ($items instanceof \Zend\Paginator\Paginator);
+    $hasGroupActions = isset($args['actions']['group']);
+?>
+<div class="data-table" id="data-table-<?php echo $args['id']; ?>">
+    <?php if (isset($args['actions']['add']) || $hasGroupActions || (isset($args['filters']) && $args['filters'])): ?>
+        <div class="row-fluid data-table-actions">
+            <div class="span6">
+                <?php if (isset($args['actions']['add'])): ?>
+                    <?php
+                    $label = $args['actions']['add']['label'];
+                    $attributes = $args['actions']['add']['attributes'];
+                    $attributes['data-rel'] = 'add';
+                    $attributes['class'] = 'btn btn-primary ' . (isset($attributes['class']) ? $attributes['class'] : '');
+                    $icon = 'plus icon-white';
+                    echo $this->bootstrapHtmlLink($label, $attributes, $icon);
+                    ?>                    
+                <?php endif; ?>
+                <?php if (isset($args['actions']['group']) && !empty($args['actions']['group'])): ?>
+                    <div class="btn-group">
+                        <button data-toggle="dropdown" class="btn"><?php echo $this->translate('Group actions'); ?></button>
+                        <button data-toggle="dropdown" class="btn dropdown-toggle">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu group-actions">
+                            <?php foreach ($args['actions']['group'] as $key => $link): ?>
+                                <li><?php echo $this->bootstrapHtmlLink($link['label'], $link['attributes']); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <div class="span6">
+                <?php if (isset($args['filters'])): ?>
+                    <a class="pull-right data-table-filters-link" href=".data-table-filters"><?php echo $this->translate('Filters'); ?></a>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($args['filters'])): ?>
+        <div class="data-table-filters" class="row-fluid">
+            <?php echo $this->partial($args['filters']['partial'], $args['filters']['variables']); ?>
+        </div>
+    <?php endif; ?>
+    <?php if ($args['search'] && $itemsIsInstanceOfPaginator && $args['item_count_per_page']): ?>
+    <div class="row-fluid">
+        <div class="span6">
+            <?php if ($itemsIsInstanceOfPaginator && $args['item_count_per_page']): ?>            
+                <?php ob_start(); ?>
+                <select style="width:auto !important;">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <?php
+                $select = ob_get_contents();
+                ob_end_clean();
+                printf($this->translate('Show %s entries'), $select);
+                ?>            
+            <?php endif; ?>
+        </div>
+        <div class="span6">
+            <?php if ($args['search']): ?>
+                <form class="form-search pull-right data-table-search">
+                    <div class="input-append">
+                        <input class="search-query" type="text" placeholder="<?php echo $args['search']; ?>" value="<?php echo isset($params['matched']['s']) ? $params['matched']['s'] : ''; ?>">
+                        <button class="btn"><i class="icon-search"></i></button>
+                    </div>
+                </form>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php ob_start(); ?>
+    <tr>
+        <?php if($hasGroupActions): ?>
+        <th class="data-table-column-check"><input type="checkbox" class="check-all" /></th>
+        <?php endif; ?>
+        <?php foreach ($args['columns'] as $key => $field): ?>
+            <th class="<?php echo isset($field['class']) ? $field['class'] : "column-{$key}"; ?>">
+                <?php echo $field['label']; ?>
+            </th>
+        <?php endforeach; ?>
+        <?php if (!empty($args['actions']['options'])): ?>
+            <th class="column-options"><?php echo $this->translate('Options') ?></th>
+        <?php endif; ?>
+    </tr>
+    <?php
+    $tHeader = ob_get_contents();
+    ob_end_clean();
+    ?>
+    <form class="data-table-form <?php echo is_null($args['table_container_class']) ? '' : $args['table_container_class']; ?>" action="<?php echo $_SERVER['REQUEST_URI'] ?>" method="post">
+        <table class="<?php echo isset($args['table_class']) ? $args['table_class'] : ''; ?>">
+            <?php if (isset($args['caption'])): ?>
+                <caption><?php echo $args['caption']; ?></caption>
+            <?php endif; ?>
+            <thead>
+                <?php echo $tHeader; ?>
+            </thead>
+            <tbody>
+                <?php
+                if ((is_array($items) && !empty($items)) || (is_object($items) && $items->count() > 0)):
+                    foreach ($items as $item):
+                        switch ($args['extract_type']) {
+                            case 'object_property':
+                                $itemId = $item->{$args['object_id']};
+                                $isMethod = false;
+                                break;
+                            case 'class_methods':
+                                $itemId = $item->{'get' . ucfirst($args['object_id'])}();
+                                $isMethod = true;
+                                break;
+                        }
+                        ?>
+                        <tr id="data-table-item-<?php echo $itemId; ?>" class="data-table-item <?php echo is_null($args['table_row_class']) ? '' : call_user_func($args['table_row_class'], $item); ?>" valign="top">
+                            <?php if($hasGroupActions): ?>
+                            <td class="data-table-column-check"><input type="checkbox" name="id[<?php echo $itemId; ?>]" value="<?php echo $itemId; ?>" /></td>
+                            <?php endif; ?>
+                            <?php foreach ($args['columns'] as $key => $field): ?>
+                                <?php
+                                switch ($args['extract_type']) {
+                                    case 'object_property':
+                                        $output = $item->{$key};
+                                        break;
+                                    case 'class_methods':
+                                        $output = $item->{'get' . ucfirst($key)}();
+                                        break;
+                                }
+
+                                if (array_key_exists('value_labels', $field)) {
+                                    $output = array_key_exists($output, $field['value_labels']) ? $field['value_labels'][$output] : $output;
+                                }
+
+                                if (isset($field['callback_method']) && !empty($field['callback_method'])) {
+                                    if (is_object($output)) {
+                                        $output = call_user_func(array($output, $field['callback_method']));
+                                    }
+                                } else if (isset($field['callback']) && !empty($field['callback'])) {
+                                    foreach ((array) $field['callback'] as $callback) {
+                                        $output = call_user_func_array($callback, array($output, $this, $item));
+                                    }
+                                }
+                                ?>
+                                <td class="<?php echo isset($field['class']) ? $field['class'] : "data-table-column-{$key}"; ?>"><?php echo $output; ?></td>
+                            <?php endforeach; ?>
+                            <?php if (!empty($args['actions']['options'])): ?>
+                                <td class="data-table-column-options">
+                                    <?php foreach ($args['actions']['options'] as $key => $link):if ($link): ?>
+                                            <?php
+                                            $attributes = $link['attributes'];
+                                            $attributes['data-rel'] = $key;
+                                            $attributes['class'] = 'btn btn-mini ' . (isset($attributes['class']) ? $attributes['class'] : '');
+                                            $attributes['href'] = $this->objectUrl($item, $isMethod, $attributes['href']);
+                                            echo $this->bootstrapHtmlLink($link['label'], $attributes, isset($link['icon']) ? $link['icon'] : null);
+                                        endif;
+                                    endforeach;
+                                    ?>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="<?php echo (count($args['columns']) + 1 + ($hasGroupActions ? 1 : 0)); ?>" class="data-table-column-empty">
+                            <?php echo $this->translate('No items were found.'); ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+            <?php if ($args['table_foot']): ?>
+                <tfoot>
+                    <?php echo $tHeader; ?>
+                </tfoot>
+            <?php endif; ?>
+        </table>
+    </form>
+    <?php
+    if ($itemsIsInstanceOfPaginator && $items->count() > 1) {
+        echo $this->bootstrapPaginator($items, 'Sliding', 'partial/bootstrap/2/data-table-pagination', array('params' => array_merge($params['basic'], $params['advanced'])));
+    }
+    ?>
+</div>
+<?php $this->inlineScript()->captureStart(); ?>
+jQuery(document).ready(function($) {
+<?php if($hasGroupActions): ?>
+    $('#data-table-<?php echo $args['id']; ?> input.check-all').on('click', function(evt) {
+        $('#data-table-<?php echo $args['id']; ?> table input[type=checkbox]').prop('checked', $(evt.target).prop('checked'));
+    });
+
+    $('#data-table-<?php echo $args['id']; ?> ul.group-actions > li > a').on('click', function(evt) {
+        if ($('#data-table-<?php echo $args['id']; ?> table').find('input[type=checkbox]').length > 0) {
+            $('#data-table-<?php echo $args['id']; ?>').attr('action', evt.target.href).submit();
+        }
+
+        return false;
+    });
+<?php endif; ?>
+
+<?php if (isset($args['filters'])): ?>
+    $('#data-table-<?php echo $args['id']; ?> a.data-table-filters-link').on('click', function(evt) {
+    $(evt.href).toggle();
+    });
+<?php endif; ?>
+
+<?php if ($args['search']): ?>
+    $('#data-table-<?php echo $args['id']; ?> form.data-table-search').on('submit', function(evt) {
+        var search = $(evt.target).find('.search-query').val();
+        
+        if (search.length >= 3 || search.length === 0) {
+            window.location.href = '<?php echo $this->url($matchedRouteName, $params['basic']); ?>' + (search.length > 0 ? '/s/' + encodeURI(search) : '');
+        }
+
+        return false;
+    });
+<?php endif; ?>
+});
+<?php $this->inlineScript()->captureEnd(); ?>
